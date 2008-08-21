@@ -1,4 +1,4 @@
-namespace :i8n_db do
+namespace :i18n_db do
   desc 'Reset the translation data'
   task :reset => [ :teardown, :setup ]
 
