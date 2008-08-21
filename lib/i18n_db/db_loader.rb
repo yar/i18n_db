@@ -41,10 +41,18 @@ module I18nDb
           # The scope can be either dot-delimited string or nil
           scope = options[:scope]
           scope = scope.join(".") if Array === scope
-          Locale.find_by_iso(locale).translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
-                    
-          # Also append the new record to the in-memory hash, to save subsequent sql requests
-          store_translations(locale, hashify_scope_and_key(scope, key))
+          
+          if scope
+            full_str_key = "#{scope}.#{key}"
+          else
+            full_str_key = "#{key}"
+          end
+
+          # We cache the already detected misses to avoid SQL requests
+          unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
+            Locale.find_by_iso(locale).translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
+            Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", nil)
+          end
         end
       end
       default_exception_handler(exception, locale, key, options)
