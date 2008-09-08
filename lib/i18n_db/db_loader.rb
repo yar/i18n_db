@@ -2,6 +2,8 @@ module I18nDb
   module DbLoader
 
     attr_accessor :record_missing_keys
+    
+    DEFAULT_RAILS_LOCALE = 'en-US'
 
     # Loads all translations for a certain locale.
     # 
@@ -34,6 +36,16 @@ module I18nDb
     def default_caching_options
       ::ActionController::Base.perform_caching ? {} : { :force => true }
     end
+    
+    def write_missing_and_try_default_locale(exception, locale, key, options={})
+      write_missing(exception, locale, key, options)
+      if locale == DEFAULT_RAILS_LOCALE
+        default_exception_handler(exception, locale, key, options)
+      else
+        default = options.delete(:saved_default)
+        return translate(key, options.merge(:locale => DEFAULT_RAILS_LOCALE, :default => default))
+      end
+    end
 
     def write_missing(exception, locale, key, options)
       if record_missing_keys
@@ -55,7 +67,6 @@ module I18nDb
           end
         end
       end
-      default_exception_handler(exception, locale, key, options)
     end
     
     # "one.two.three", "foo" => {:one => {:two => {:three => {:foo => nil }}}}

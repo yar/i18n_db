@@ -16,5 +16,27 @@ SELECT distinct(namespace) FROM i18n_db_translations order by namespace
 SQL
     self.connection.select_values(sql).compact
   end
+  
+  def self.simple_localization_to_sql(locale, path)
+    hash = YAML.load_file(path)
+    hash_to_sql(locale, hash["app"], "app")
+  end
+  
+  def self.hash_to_sql(locale, hash, namespace)
+    hash.each do |key, val|
+      if Hash === val
+        hash_to_sql(locale, val, "#{namespace}.#{key}")
+      else
+        locale.translations.create \
+          :tr_key => key, 
+          :namespace => namespace, 
+          :text => simple_localization_escaping_to_rails(val)
+      end
+    end
+  end
+  
+  def self.simple_localization_escaping_to_rails(str)
+    str.gsub(/:(\w[\w\d_]*)/, '{{\\1}}')
+  end
 
 end

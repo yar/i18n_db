@@ -9,6 +9,14 @@ module I18nDb
       I18n.populate do
         I18n.store_translations(I18n.locale, I18n.translations_from_db)
       end
+      
+      unless I18n::Backend::Simple.respond_to? :translate_without_default_passed_to_exception
+        I18n::Backend::Simple.module_eval do
+          class << self
+            alias_method_chain :translate, :default_passed_to_exception            
+          end
+        end
+      end
     end
   end
 end
