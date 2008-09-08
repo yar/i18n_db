@@ -10,19 +10,6 @@ module I18n
         end
         translate_without_default_passed_to_exception(locale, key, options)
       end
-
-      # This method is fixed to correctly return nil for an array where none of the keys
-      # has a translation - also crucial for fallback locales
-      def default_with_correct_nil_for_array(locale, default_val, options = {})
-        if Array === default_val
-          default_val.each do |obj|
-            result = default_without_correct_nil_for_array(locale, obj, options.dup) and return result
-          end
-          return nil
-        else
-          return default_without_correct_nil_for_array(locale, default_val, options)
-        end
-      end
     end
   end
 end
