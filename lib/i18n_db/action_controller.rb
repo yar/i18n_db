@@ -14,6 +14,7 @@ module I18nDb
         I18n::Backend::Simple.module_eval do
           class << self
             alias_method_chain :translate, :default_passed_to_exception            
+            alias_method_chain :default, :correct_nil_for_array
           end
         end
       end
