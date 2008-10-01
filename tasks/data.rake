@@ -17,6 +17,7 @@ namespace :i18n_db do
       t.column :locale_id,              :integer
       t.column :text,                   :text
       t.column :namespace,              :string
+      t.column :main,                   :boolean
     end
     ActiveRecord::Base.connection.add_index :i18n_db_translations, [ :tr_key, :locale_id ]
 
