@@ -1,6 +1,11 @@
 class Translation < ActiveRecord::Base
   belongs_to :locale
   set_table_name "i18n_db_translations"
+  
+  def counterpart_in(locale)
+    locale.translations.find(:first, :conditions => { :namespace => namespace, :tr_key => tr_key }) \
+    || locale.translations.build(:namespace => namespace, :tr_key => tr_key)
+  end
 
   def self.pick(key, locale, namespace = nil)
     conditions = 'tr_key = ? AND locale_id = ?'
@@ -38,5 +43,4 @@ SQL
   def self.simple_localization_escaping_to_rails(str)
     str.gsub(/:(\w[\w\d_]*)/, '{{\\1}}')
   end
-
 end
