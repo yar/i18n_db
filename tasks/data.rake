@@ -17,13 +17,13 @@ namespace :i18n_db do
       t.column :locale_id,              :integer
       t.column :text,                   :text
       t.column :namespace,              :string
-      t.column :main,                   :boolean
     end
     ActiveRecord::Base.connection.add_index :i18n_db_translations, [ :tr_key, :locale_id ]
 
     ActiveRecord::Base.connection.create_table :i18n_db_locales, :force => true do |t|
       t.column :iso,                    :string
       t.column :short,                  :string
+      t.column :main,                   :boolean
     end
     ActiveRecord::Base.connection.add_index :i18n_db_locales, :iso
     ActiveRecord::Base.connection.add_index :i18n_db_locales, :short
