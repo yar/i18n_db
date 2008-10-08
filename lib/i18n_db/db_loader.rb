@@ -19,15 +19,17 @@ module I18nDb
       caching_options = default_caching_options.merge(options)
       Rails.cache.fetch("locales/#{locale}", caching_options) do
         translations = {}
-        Locale.find_by_iso(locale).translations.find(:all).each do |tr|
-          pos = translations
-          unless tr.namespace.blank?
-            tr.namespace.split(".").each do |ns|
-              pos[ns.to_sym] ||= {}
-              pos = pos[ns.to_sym]
+        if locale_obj = Locale.find_by_iso(locale)
+          locale_obj.translations.find(:all).each do |tr|
+            pos = translations
+            unless tr.namespace.blank?
+              tr.namespace.split(".").each do |ns|
+                pos[ns.to_sym] ||= {}
+                pos = pos[ns.to_sym]
+              end
             end
+            pos[tr.tr_key] = tr.text
           end
-          pos[tr.tr_key] = tr.text
         end
         translations
       end
@@ -62,7 +64,9 @@ module I18nDb
 
           # We cache the already detected misses to avoid SQL requests
           unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
-            Locale.find_by_iso(locale).translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
+            if locale_obj = Locale.find_by_iso(locale)
+              locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
+            end
             Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", nil)
           end
         end
