@@ -54,7 +54,7 @@ module I18nDb
             if locale_obj = Locale.find_by_iso(locale)
               locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
             end
-            Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", nil)
+            Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", true)
           end
         end
       end
