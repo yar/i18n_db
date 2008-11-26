@@ -4,10 +4,6 @@ module I18nDb
     attr_accessor :record_missing_keys
     
     DEFAULT_RAILS_LOCALE = 'en-US'
-    
-    def ensure_locale_loaded_and_recent(locale)
-      Rails.cache.get("locale_versions")
-    end
 
     def translations_from_db(locale = I18n.locale.to_s)
       translations = {}
@@ -31,7 +27,6 @@ module I18nDb
     end
     
     def write_missing_and_try_default_locale(exception, locale, key, options={})
-      default_exception_handler(exception, locale, key, options)
       write_missing(exception, locale, key, options)
       if locale == DEFAULT_RAILS_LOCALE
         default_exception_handler(exception, locale, key, options)
