@@ -3,11 +3,11 @@ module I18nDb
 
     attr_accessor :record_missing_keys
     
-    DEFAULT_RAILS_LOCALE = 'en-US'
+    DEFAULT_RAILS_LOCALE = 'en'
 
     def translations_from_db(locale = I18n.locale.to_s)
       translations = {}
-      if locale_obj = Locale.find_by_iso(locale)
+      if locale_obj = Locale.find_by_short(locale)
         locale_obj.translations.find(:all).each do |tr|
           pos = translations
           unless tr.namespace.blank?
@@ -16,7 +16,7 @@ module I18nDb
               pos = pos[ns.to_sym]
             end
           end
-          pos[tr.tr_key] = tr.text
+          pos[tr.tr_key.to_sym] = tr.text
         end
       end
       translations
@@ -51,7 +51,7 @@ module I18nDb
 
           # We cache the already detected misses to avoid SQL requests
           unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
-            if locale_obj = Locale.find_by_iso(locale)
+            if locale_obj = Locale.find_by_short(locale)
               locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
             end
             Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", true)

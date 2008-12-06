@@ -24,7 +24,7 @@ module I18nDb
       loc_obj = nil
       
       updated_at = Rails.cache.fetch("locale_versions/#{locale}") do
-        loc_obj = Locale.find_by_iso(locale)
+        loc_obj = Locale.find_by_short(locale)
         timestamp = loc_obj.updated_at if loc_obj
         timestamp ||= 0
       end
@@ -32,20 +32,21 @@ module I18nDb
       return false unless updated_at || loc_obj
       
       cached_versions = I18n.backend.instance_eval { @locale_versions }
+      translations = I18n.backend.instance_eval { @translations }
       unless cached_versions 
         cached_versions = {}
       end
-      unless cached_versions[locale] && cached_versions[locale] == updated_at
+      unless cached_versions[locale] && cached_versions[locale] == updated_at && translations
         reload_translations_for_locale(locale, updated_at)
         cached_versions[locale] = updated_at
       end
       I18n.backend.instance_eval { @locale_versions = cached_versions }
     end
 
-    def set_locale(locale='en-US')
-      I18n.locale = locale.to_sym
+    def set_locale(locale=:en)
+      I18n.locale = locale
       
-      ensure_translations_updated(locale)
+      ensure_translations_updated(locale.to_s)
                   
       unless I18n::Backend::Simple.instance_methods.include? "translate_without_default_passed_to_exception"
         I18n::Backend::Simple.class_eval do
