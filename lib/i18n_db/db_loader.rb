@@ -44,14 +44,14 @@ module I18nDb
           scope = scope.join(".") if Array === scope
           
           if scope
-            full_str_key = "#{scope}.#{key}"
+            full_str_key = "#{scope}->#{key}"
           else
             full_str_key = "#{key}"
           end
 
           # We cache the already detected misses to avoid SQL requests
           unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
-            if locale_obj = Locale.find_by_short(locale)
+            if locale_obj = Locale.find_by_short(locale.to_s)
               locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
             end
             Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", true)
