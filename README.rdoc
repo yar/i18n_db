@@ -1,4 +1,4 @@
-=Database-driven namespaced translations for Rails 2.2
+=Database-driven namespaced translations for Rails
 
 This is a Rails-2.2+ i18n plugin written with a specific set of features in mind:
 
