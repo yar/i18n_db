@@ -7,7 +7,7 @@ class Locale < ActiveRecord::Base
   def completeness
     return 1.0 if main?
     
-    main_translations_count = Locale.find_by_main(true).translations.count
+    main_translations_count = Locale.find_main_cached.translations.count
     main_translations = Locale.find_main_translations
     local_translations = translations.inject({}) { |memo, tr| memo["#{tr.namespace}/#{tr.tr_key}"] = tr; memo }
     
@@ -19,10 +19,14 @@ class Locale < ActiveRecord::Base
     end
     (main_translations_count - outdated).to_f / main_translations_count
   end
+  
+  def self.find_main_cached
+    @@find_main_cached ||= find_by_main(1)
+  end
         
   # sets up a hash with keys like "app.pages.membership/n_months_free" and values being
   # translation activerecord objects
   def self.find_main_translations
-    find_by_main(true).translations.inject({}) { |memo, tr| memo["#{tr.namespace}/#{tr.tr_key}"] = tr; memo }
+    find_main_cached.translations.inject({}) { |memo, tr| memo["#{tr.namespace}/#{tr.tr_key}"] = tr; memo }
   end
 end
