@@ -21,6 +21,12 @@ module I18nDb
       nil
     end
     
+    # There are 3 storages for translations, in order of decreasing speed:
+    # * Per-process class variable
+    # * Memcached
+    # * ActiveRecord
+    # Upon each request, timestamps of the class variable locales are verified (by the means of a tiny 
+    # and fast memcached lookup).
     def ensure_translations_updated(locale)
       loc_obj = nil
       
