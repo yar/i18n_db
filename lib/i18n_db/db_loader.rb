@@ -17,7 +17,7 @@ module I18nDb
             end
           end
           # begin
-            pos[tr.tr_key.to_sym] = tr.text
+            pos[tr.tr_key.to_sym] = tr.text unless tr.tr_key.blank?
           # rescue ArgumentError
           #   # logger.warn "ArgumentError, tr_key: #{tr.tr_key}, translation: #{tr.inspect}"
           # end
