@@ -27,6 +27,7 @@ namespace :i18n_db do
       t.column :iso,                    :string
       t.column :short,                  :string
       t.column :main,                   :boolean
+      t.column :updated_at,             :datetime
     end
     ActiveRecord::Base.connection.add_index :i18n_db_locales, :iso
     ActiveRecord::Base.connection.add_index :i18n_db_locales, :short

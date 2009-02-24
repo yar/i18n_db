@@ -5,6 +5,7 @@ module I18nDb
     
     def reload_translations_for_locale(locale, updated_at)
       translations = Rails.cache.fetch("locales/#{locale}/#{updated_at.to_i}") do
+        logger.warn "Loading translations for locale #{locale}"
         I18n.translations_from_db(locale)
       end
       
@@ -20,6 +21,12 @@ module I18nDb
       nil
     end
     
+    # There are 3 storages for translations, in order of decreasing speed:
+    # * Per-process class variable
+    # * Memcached
+    # * ActiveRecord
+    # Upon each request, timestamps of the class variable locales are verified (by the means of a tiny 
+    # and fast memcached lookup).
     def ensure_translations_updated(locale)
       loc_obj = nil
       
@@ -36,7 +43,7 @@ module I18nDb
       unless cached_versions 
         cached_versions = {}
       end
-      unless cached_versions[locale] && cached_versions[locale] == updated_at && translations
+      unless cached_versions[locale] && cached_versions[locale] == updated_at && translations && translations[locale]
         reload_translations_for_locale(locale, updated_at)
         cached_versions[locale] = updated_at
       end

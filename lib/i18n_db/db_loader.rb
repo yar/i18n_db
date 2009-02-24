@@ -3,8 +3,6 @@ module I18nDb
 
     attr_accessor :record_missing_keys
     
-    DEFAULT_RAILS_LOCALE = 'en'
-
     def translations_from_db(locale = I18n.locale.to_s)
       translations = {}
       if locale_obj = Locale.find_by_short(locale)
@@ -32,11 +30,11 @@ module I18nDb
     
     def write_missing_and_try_default_locale(exception, locale, key, options={})
       write_missing(exception, locale, key, options)
-      if locale == DEFAULT_RAILS_LOCALE
+      if locale == Locale.find_main_cached.short
         default_exception_handler(exception, locale, key, options)
       else
         default = options.delete(:saved_default)
-        return translate(key, options.merge(:locale => DEFAULT_RAILS_LOCALE, :default => default))
+        return translate(key, options.merge(:locale => Locale.find_main_cached.short, :default => default))
       end
     end
 
