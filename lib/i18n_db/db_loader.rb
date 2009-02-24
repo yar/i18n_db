@@ -16,7 +16,11 @@ module I18nDb
               pos = pos[ns.to_sym]
             end
           end
-          pos[tr.tr_key.to_sym] = tr.text
+          # begin
+            pos[tr.tr_key.to_sym] = tr.text
+          # rescue ArgumentError
+          #   # logger.warn "ArgumentError, tr_key: #{tr.tr_key}, translation: #{tr.inspect}"
+          # end
         end
       end
       translations
@@ -51,7 +55,7 @@ module I18nDb
 
           # We cache the already detected misses to avoid SQL requests
           unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
-            if locale_obj = Locale.find_by_short(locale.to_s)
+            if (locale_obj = Locale.find_by_short(locale.to_s)) && key.to_s != ""
               locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
             end
             Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", true)
