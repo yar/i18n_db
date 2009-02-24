@@ -16,7 +16,7 @@ module I18nDb
               pos = pos[ns.to_sym]
             end
           end
-          pos[tr.tr_key.to_sym] = tr.text
+          pos[tr.tr_key.to_sym] = tr.text unless tr.tr_key.blank?
         end
       end
       translations
