@@ -30,7 +30,8 @@ module I18nDb
     
     def write_missing_and_try_default_locale(exception, locale, key, options={})
       write_missing(exception, locale, key, options)
-      if locale == Locale.find_main_cached.short
+      main_locale = Locale.find_main_cached
+      if !main_locale || (locale == Locale.find_main_cached.short) # main locale can be missing, say, in tests
         default_exception_handler(exception, locale, key, options)
       else
         default = options.delete(:saved_default)
