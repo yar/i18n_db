@@ -5,7 +5,7 @@ class Translation < ActiveRecord::Base
   def validate
     unless locale.main?
       main_tr = counterpart_in_main
-      if main_tr
+      if main_tr && !main_tr.text.blank?
         if main_tr.count_macros != count_macros
           errors.add("text", "did not preserve macro variables, e.g. {{to_be_kept}}. Please do not change or translate the macros.")
         end
@@ -44,6 +44,22 @@ class Translation < ActiveRecord::Base
   
   def counterpart_in_main
     Locale.find_main_cached.translations.find(:first, :conditions => { :namespace => namespace, :tr_key => tr_key })
+  end
+  
+  # Corresponding translations will be copied to the new place in all locales where destination does not exist already
+  def safe_copy_to(new_namespace, new_key)
+    created_list = []
+    Locale.find(:all).each do |loc|
+      source = counterpart_in(loc)
+      target = loc.translations.find_or_initialize_by_namespace_and_tr_key(new_namespace, new_key)
+      
+      if source && !source.text.blank? && (target.new_record? || target.text.blank?)
+        target.text = source.text
+        target.save!
+        created_list << target
+      end
+    end
+    created_list
   end
 
   def self.pick(key, locale, namespace = nil)

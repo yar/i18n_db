@@ -55,7 +55,23 @@ module I18nDb
           # We cache the already detected misses to avoid SQL requests
           unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
             if (locale_obj = Locale.find_by_short(locale.to_s)) && key.to_s != ""
-              locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
+              # We should not create "bar" in "foo" if "foo.bar" namespace exists
+              unless locale_obj.translations.count(:conditions => { :namespace => "#{scope}.#{key}"}) > 0
+                # The opposite also applies:
+                # we should not create "foo.bar.qux.baz" 
+                # if key "bar" exists in "foo" 
+                # or key "qux" exists in "foo.bar" 
+                # or key "baz" etc...
+                used_parts = []
+                conflicting_record = nil
+                scope.split(".").each do |part|
+                  break if conflicting_record = locale_obj.translations.find_by_namespace_and_tr_key(used_parts.join("."), part)
+                  used_parts << part
+                end
+                unless conflicting_record
+                  locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
+                end
+              end
             end
             Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", true)
           end
