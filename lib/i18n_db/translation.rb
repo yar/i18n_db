@@ -53,7 +53,7 @@ class Translation < ActiveRecord::Base
       source = counterpart_in(loc)
       target = loc.translations.find_or_initialize_by_namespace_and_tr_key(new_namespace, new_key)
       
-      if source && !source.text.blank? && target.new_record?
+      if source && !source.text.blank? && (target.new_record? || target.text.blank?)
         target.text = source.text
         target.save!
         created_list << target
