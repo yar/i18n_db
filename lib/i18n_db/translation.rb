@@ -50,12 +50,14 @@ class Translation < ActiveRecord::Base
   def safe_copy_to(new_namespace, new_key)
     created_list = []
     Locale.find(:all).each do |loc|
+      puts "Locale #{loc.short}"
       source = counterpart_in(loc)
       target = loc.translations.find_or_initialize_by_namespace_and_tr_key(new_namespace, new_key)
+      puts "Source #{source.id}, target #{target.id}"
       
       if source && !source.text.blank? && (target.new_record? || target.text.blank?)
         target.text = source.text
-        target.save!
+        target.save(false) # macros may not correspond to the main locale version, but we are copying so we do not enforce it
         created_list << target
       end
     end
