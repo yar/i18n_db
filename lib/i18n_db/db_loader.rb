@@ -42,6 +42,9 @@ module I18nDb
     def write_missing(exception, locale, key, options)
       if record_missing_keys
         if I18n::MissingTranslationData === exception
+          # Not saving anything unless there are locales defined
+          if main_locale = Locale.find_main_cached
+
           # The scope can be either dot-delimited string or nil
           scope = options[:scope]
           scope = scope.join(".") if Array === scope
@@ -52,28 +55,34 @@ module I18nDb
             full_str_key = "#{key}"
           end
 
-          # We cache the already detected misses to avoid SQL requests
-          unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
-            if (locale_obj = Locale.find_by_short(locale.to_s)) && key.to_s != ""
-              # We should not create "bar" in "foo" if "foo.bar" namespace exists
-              unless locale_obj.translations.count(:conditions => { :namespace => "#{scope}.#{key}"}) > 0
-                # The opposite also applies:
-                # we should not create "foo.bar.qux.baz" 
-                # if key "bar" exists in "foo" 
-                # or key "qux" exists in "foo.bar" 
-                # or key "baz" etc...
-                used_parts = []
-                conflicting_record = nil
-                scope.split(".").each do |part|
-                  break if conflicting_record = locale_obj.translations.find_by_namespace_and_tr_key(used_parts.join("."), part)
-                  used_parts << part
-                end
-                unless conflicting_record
-                  locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
+            # We cache the already detected misses to avoid SQL requests
+            unless Rails.cache.exist?("locales_missing/#{locale}/#{full_str_key}")
+              if locale.to_s == main_locale.short
+                locale_obj = main_locale
+              else
+                locale_obj = Locale.find_by_short(locale.to_s)
+              end
+              if locale_obj && key.to_s != ""
+                # We should not create "bar" in "foo" if "foo.bar" namespace exists
+                unless locale_obj.translations.count(:conditions => { :namespace => "#{scope}.#{key}"}) > 0
+                  # The opposite also applies:
+                  # we should not create "foo.bar.qux.baz" 
+                  # if key "bar" exists in "foo" 
+                  # or key "qux" exists in "foo.bar" 
+                  # or key "baz" etc...
+                  used_parts = []
+                  conflicting_record = nil
+                  scope.split(".").each do |part|
+                    break if conflicting_record = locale_obj.translations.find_by_namespace_and_tr_key(used_parts.join("."), part)
+                    used_parts << part
+                  end
+                  unless conflicting_record
+                    locale_obj.translations.find_or_create_by_tr_key_and_namespace(key.to_s, scope)
+                  end
                 end
               end
+              Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", true)
             end
-            Rails.cache.write("locales_missing/#{locale}/#{full_str_key}", true)
           end
         end
       end

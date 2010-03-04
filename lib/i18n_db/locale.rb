@@ -23,13 +23,18 @@ class Locale < ActiveRecord::Base
     (main_translations_count - outdated).to_f / main_translations_count
   end
   
-  def self.find_main_cached
-    @@find_main_cached ||= find_by_main(1)
-  end
-        
-  # Sets up a hash with keys like "app.pages.membership/n_months_free" and values being
-  # translation activerecord objects
-  def self.find_main_translations
-    find_main_cached.translations.inject({}) { |memo, tr| memo["#{tr.namespace}/#{tr.tr_key}"] = tr; memo }
-  end
+  class << self
+    extend ActiveSupport::Memoizable
+    
+    def find_main_cached
+      find_by_main(1)
+    end
+    memoize :find_main_cached
+
+    # Sets up a hash with keys like "app.pages.membership/n_months_free" and values being
+    # translation activerecord objects
+    def find_main_translations
+      find_main_cached.translations.inject({}) { |memo, tr| memo["#{tr.namespace}/#{tr.tr_key}"] = tr; memo }
+    end
+  end        
 end
