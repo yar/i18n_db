@@ -18,7 +18,7 @@ class Translation < ActiveRecord::Base
   
   def count_macros
     macros = {}
-    text.scan /\{\{(.*?)\}\}/ do |matches|
+    "#{text}".scan /\{\{(.*?)\}\}/ do |matches|
       key = matches.first
       macros[key] ||= 0
       macros[key] += 1
@@ -28,7 +28,7 @@ class Translation < ActiveRecord::Base
   
   def count_link_targets
     link_targets = {}
-    text.scan /href=(.*?)>/ do |matches|
+    "#{text}".scan /href=(.*?)>/ do |matches|
       key = matches.first
       link_targets[key] ||= 0
       link_targets[key] += 1
