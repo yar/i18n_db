@@ -7,7 +7,7 @@ class Translation < ActiveRecord::Base
       main_tr = counterpart_in_main
       if main_tr && !main_tr.text.blank?
         if main_tr.count_macros != count_macros
-          errors.add("text", "did not preserve macro variables, e.g. {{to_be_kept}}. Please do not change or translate the macros.")
+          errors.add("text", "did not preserve macro variables, e.g. %{to_be_kept}. Please do not change or translate the macros.")
         end
         if main_tr.count_link_targets != count_link_targets
           errors.add("text", "did not preserve html links, e.g. <a href=\"to_be_kept\">...</a>. Please do not change or translate the URLs.")
@@ -18,7 +18,7 @@ class Translation < ActiveRecord::Base
   
   def count_macros
     macros = {}
-    "#{text}".scan /\{\{(.*?)\}\}/ do |matches|
+    "#{text}".scan /%\{(.*?)\}/ do |matches|
       key = matches.first
       macros[key] ||= 0
       macros[key] += 1
@@ -98,6 +98,6 @@ SQL
   end
   
   def self.simple_localization_escaping_to_rails(str)
-    str.gsub(/:(\w[\w\d_]*)/, '{{\\1}}')
+    str.gsub(/:(\w[\w\d_]*)/, '%{\\1}')
   end
 end

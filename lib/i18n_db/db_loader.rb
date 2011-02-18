@@ -32,7 +32,9 @@ module I18nDb
       write_missing(exception, locale, key, options)
       main_locale = Locale.find_main_cached
       if !main_locale || (locale == Locale.find_main_cached.short) # main locale can be missing, say, in tests
-        default_exception_handler(exception, locale, key, options)
+        # default_exception_handler(exception, locale, key, options)
+        I18n.exception_handler = I18n::ExceptionHandler.new
+        I18n.exception_handler.call(exception, locale, key, options)
       else
         default = options.delete(:saved_default)
         return translate(key, options.merge(:locale => Locale.find_main_cached.short, :default => default))
