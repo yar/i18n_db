@@ -74,7 +74,7 @@ module I18nDb
                   # or key "baz" etc...
                   used_parts = []
                   conflicting_record = nil
-                  scope.split(".").each do |part|
+                  "#{scope}".split(".").each do |part|
                     break if conflicting_record = locale_obj.translations.find_by_namespace_and_tr_key(used_parts.join("."), part)
                     used_parts << part
                   end
