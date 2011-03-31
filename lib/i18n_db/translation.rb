@@ -1,6 +1,7 @@
 class Translation < ActiveRecord::Base
   belongs_to :locale
   set_table_name "i18n_db_translations"
+  named_scope :non_blank, :conditions => "text IS NOT NULL AND text <> ''"
   
   def validate
     unless locale.main?
@@ -13,6 +14,20 @@ class Translation < ActiveRecord::Base
           errors.add("text", "did not preserve html links, e.g. <a href=\"to_be_kept\">...</a>. Please do not change or translate the URLs.")
         end
       end
+    end
+  end
+  
+  def syntax_matches?(counterpart)
+    if counterpart && !counterpart.text.blank?
+      if counterpart.count_macros != count_macros
+        return false
+      end
+      if counterpart.count_link_targets != count_link_targets
+        return false
+      end
+      return true
+    else
+      return true
     end
   end
   
@@ -62,6 +77,10 @@ class Translation < ActiveRecord::Base
       end
     end
     created_list
+  end
+  
+  def tolk_key
+    self.namespace.gsub("app.", "") + "." + self.tr_key
   end
 
   def self.pick(key, locale, namespace = nil)

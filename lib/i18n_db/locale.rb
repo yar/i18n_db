@@ -23,6 +23,43 @@ class Locale < ActiveRecord::Base
     (main_translations_count - outdated).to_f / main_translations_count
   end
   
+  def name_for_tolk
+    case self.short
+    when "pt"
+      "pt-PT"
+    else
+      self.short
+    end
+  end
+  
+  def migrate_to_tolk
+    tolk_locale = Tolk::Locale.find_or_create_by_name(self.name_for_tolk, :updated_at => self.updated_at)
+    
+    tolk_phrases = Tolk::Phrase.find(:all, :order => "`key`").inject({}) { |acc, el| acc[el.key] = el; acc }
+    tolk_translations = tolk_locale.translations.find(:all, :order => "phrase_id").inject({}) { |acc, el| acc[el.phrase_id] = el; acc }
+
+    self.translations.non_blank.find(:all, :order => "id").each do |tr|
+      if tolk_phrase = tolk_phrases[tr.tolk_key]
+        if tolk_translation = tolk_translations[tolk_phrase.id]
+          unless tolk_translation.text == tr.text 
+            logger.debug "TOLK MIGR.: translation #{tr.id} duplicates another"
+          end
+        else
+          begin
+            tolk_translations[tolk_phrase.id] = tolk_locale.translations.create! :phrase => tolk_phrase,
+              :text => tr.text,
+              :created_at => tr.created_at,
+              :updated_at => tr.updated_at
+          rescue ActiveRecord::RecordInvalid
+            logger.debug "TOLK MIGR.: skipping translation #{tr.id} (#{self.short}) which failed validation"
+          end
+        end
+      else
+        logger.debug "TOLK MIGR.: cannot find Tolk phrase for translation #{tr.id}"
+      end
+    end
+  end
+  
   class << self
     extend ActiveSupport::Memoizable
     
@@ -35,6 +72,27 @@ class Locale < ActiveRecord::Base
     # translation activerecord objects
     def find_main_translations
       find_main_cached.translations.inject({}) { |memo, tr| memo["#{tr.namespace}/#{tr.tr_key}"] = tr; memo }
+    end
+    
+    def migrate_all_to_tolk
+      create_tolk_phrases_from_main_locale
+      
+      Locale.find(:all, :order => "main DESC, id").each do |locale|
+        locale.migrate_to_tolk
+      end
+    end
+    
+    def create_tolk_phrases_from_main_locale
+      tolk_phrases = Tolk::Phrase.find(:all, :order => "`key`").inject({}) { |acc, el| acc[el.key] = el; acc }             
+      # the main locale is populated first, so that Tolk macro validations will work in all others
+      find_main_cached.translations.non_blank.find(:all, :order => "id").each do |tr|
+        unless tolk_phrases[tr.tolk_key]
+          tolk_phrases[tr.tolk_key] = Tolk::Phrase.create! :key => tr.tolk_key,
+            :created_at => tr.created_at,
+            :updated_at => tr.updated_at
+        end
+      end
+      
     end
   end        
 end
