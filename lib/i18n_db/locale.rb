@@ -46,12 +46,17 @@ class Locale < ActiveRecord::Base
           end
         else
           begin
-            tolk_translations[tolk_phrase.id] = tolk_locale.translations.create! :phrase => tolk_phrase,
+            new_tolk_translation = tolk_locale.translations.build :phrase => tolk_phrase,
               :text => tr.text,
               :created_at => tr.created_at,
               :updated_at => tr.updated_at
+            def new_tolk_translation.check_matching_variables
+              # check nothing
+            end
+            new_tolk_translation.save!
+            tolk_translations[tolk_phrase.id] = new_tolk_translation
           rescue ActiveRecord::RecordInvalid
-            logger.debug "TOLK MIGR.: skipping translation #{tr.id} (#{self.short}) which failed validation"
+            logger.debug "TOLK MIGR.: skipping translation #{tr.id} (#{self.short}) of #{tr.counterpart_in_main.id} (main) which failed validation"
           end
         end
       else
