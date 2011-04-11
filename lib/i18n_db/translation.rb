@@ -80,7 +80,8 @@ class Translation < ActiveRecord::Base
   end
   
   def tolk_key
-    self.namespace.gsub("app.", "") + "." + self.tr_key
+    # self.namespace.gsub("app.", "") + "." + self.tr_key
+    self.namespace + "." + self.tr_key
   end
 
   def self.pick(key, locale, namespace = nil)
